@@ -3,6 +3,8 @@ Data Read Demo
 
  Created  12 Dec 2016
  Modified 10 Mar 2019 for Settimino 2.0.0
+ Modified 03 Jul 2025 for GIGA R1 / Portenta compatibility
+ Modified 05 Jul 2025 for WaveShare ESP32-S3-ETH compatibility
  by Davide Nardella
  
 ------------------------------------------------------------------------
@@ -21,10 +23,10 @@ Specify its number into DBNum variable
   - If you want to connect to S7400 see your hardware configuration.
   - If you want to work with a LOGO 0BA7 or S7200 please refer to the
     documentation and change 
-    Client.ConnectTo(<IP>, <Rack>, <Slot>);
+    MyClient.ConnectTo(<IP>, <Rack>, <Slot>);
     with the couple
-    Client.SetConnectionParams(<IP>, <LocalTSAP>, <Remote TSAP>);
-    Client.Connect();
+    MyClient.SetConnectionParams(<IP>, <LocalTSAP>, <Remote TSAP>);
+    MyClient.Connect();
     
 ----------------------------------------------------------------------*/
 #include "Platform.h"
@@ -38,8 +40,8 @@ Specify its number into DBNum variable
 byte mac[] = { 
   0x90, 0xA2, 0xDA, 0x0F, 0x08, 0xE1 };
 
-IPAddress Local(192,168,0,90); // Local Address
-IPAddress PLC(192,168,0,12);   // PLC Address
+IPAddress Local(192,168,0,251); // Local Address
+IPAddress PLC(192,168,0,250);   // PLC Address
 
 // Following constants are needed if you are connecting via WIFI
 // The ssid is the name of my WIFI network (the password obviously is wrong)
@@ -51,7 +53,7 @@ IPAddress Subnet(255, 255, 255, 0);
 int DBNum = 100; // This DB must be present in your PLC
 byte Buffer[1024];
 
-S7Client Client;
+S7Client MyClient; // Renamed Client to MyClient to avoid ambiguities in mbed Environment (GIGA/Portenta)
 
 unsigned long Elapsed; // To calc the execution time
 //----------------------------------------------------------------------
@@ -87,7 +89,7 @@ void setup() {
     Serial.println("");
     Serial.println("Cable connected");  
     Serial.print("Local IP address : ");
-    Serial.println(Ethernet.localIP());
+//    Serial.println(Ethernet.localIP());
 #endif   
 }
 //----------------------------------------------------------------------
@@ -95,13 +97,13 @@ void setup() {
 //----------------------------------------------------------------------
 bool Connect()
 {
-    int Result=Client.ConnectTo(PLC, 
+    int Result=MyClient.ConnectTo(PLC, 
                                   0,  // Rack (see the doc.)
-                                  2); // Slot (see the doc.)
+                                  0); // Slot (see the doc.)
     Serial.print("Connecting to ");Serial.println(PLC);  
     if (Result==0) 
     {
-      Serial.print("Connected ! PDU Length = ");Serial.println(Client.GetPDULength());
+      Serial.print("Connected ! PDU Length = ");Serial.println(MyClient.GetPDULength());
     }
     else
       Serial.println("Connection error");
@@ -149,7 +151,7 @@ void CheckError(int ErrNo)
   if (ErrNo & 0x00FF)
   {
     Serial.println("SEVERE ERROR, disconnecting.");
-    Client.Disconnect(); 
+    MyClient.Disconnect(); 
   }
 }
 //----------------------------------------------------------------------
@@ -184,7 +186,7 @@ void loop()
 #endif
   
   // Connection
-  while (!Client.Connected)
+  while (!MyClient.Connected)
   {
     if (!Connect())
       delay(500);
@@ -193,7 +195,7 @@ void loop()
   Serial.print("Reading ");Serial.print(Size);Serial.print(" bytes from DB");Serial.println(DBNum);
   // Get the current tick
   MarkTime();
-  Result=Client.ReadArea(S7AreaDB, // We are requesting DB access
+  Result=MyClient.ReadArea(S7AreaDB, // We are requesting DB access
                          DBNum,    // DB Number
                          0,        // Start from byte N.0
                          Size,     // We need "Size" bytes

@@ -1,5 +1,5 @@
 /*=============================================================================|
-|  PROJECT SETTIMINO                                                     2.0.0 |
+|  PROJECT SETTIMINO                                                     2.1.0 |
 |==============================================================================|
 |  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
@@ -29,7 +29,10 @@
 |        Added Read/Write consistent bit into the CPU                          |
 |        Added new 18 helper functions                                         |
 |        Small bugfixes (Thanks to Daniel Förstmann and Schöneberg Swen)       |
-|                                                                              |
+|  2.1.0 Added new hardware support                                            |
+|        Arduino GIGA R1 WIFI with Ethernet Shield 2                           |
+|        Arduino Portenta with Portenta Hat Carrier                            |
+|        Waveshare ESP32-S3-ETH                                                |
 |=============================================================================*/
 #ifndef PLATFORM_H
 #define PLATFORM_H
@@ -55,7 +58,13 @@
 //      Basic, Gray, Red
 //  M5STACK_LAN
 //      Core + LAN MODULE (W5500)
-//
+//  ARDUINO_PORTENTA
+//      Portenta + Hat Carrier
+//  ARDUINO_GIGA
+//      Arduino GIGA R1 WIFI + Ethernet Shield 2
+//  ESP32_S3_ETH
+//      Waveshare ESP32-S3-ETH board
+//      https://www.waveshare.com/wiki/ESP32-S3-ETH
 //*********************************************************************
 //  Notes of external libraries needed.
 //  If you already use that boards, you should have already installed
@@ -67,17 +76,20 @@
 //  M5STACK (*)
 //      https://docs.m5stack.com/#/en/quick_start/m5core/m5stack_core_get_started_Arduino_Windows
 //  	https://github.com/m5stack/M5Stack
-//
+// 
 //  (*) Need also to install Ethernet2 library to use the LAN MODULE.
 //      Use the Arduino IDE Library Manager. 
 //
 //*********************************************************************
 
-//#define ARDUINO_LAN    
+#define ARDUINO_LAN    
 //#define ESP8266_FAMILY  
 //#define ESP32_WIFI
 //#define M5STACK_WIFI
-#define M5STACK_LAN
+//#define M5STACK_LAN
+//#define PORTENTA
+//#define GIGA_R1_LAN
+//#define ESP32_S3_ETH
 
 #include <SPI.h>
 
@@ -113,8 +125,37 @@
   #define S7WIRED
 #endif
 
+#ifdef PORTENTA
+  #include <Ethernet.h>
+  #define S7WIRED
+#endif
+
+#ifdef GIGA_R1_LAN
+  #include <Ethernet.h>
+  #define S7WIRED
+#endif
+
+#ifdef ESP32_S3_ETH
+  #include <ETH.h>
+
+  #ifndef ETH_PHY_CS
+  #define ETH_PHY_TYPE ETH_PHY_W5500
+  #define ETH_PHY_ADDR 1
+  #define ETH_PHY_CS   14
+  #define ETH_PHY_IRQ  10
+  #define ETH_PHY_RST  9
+  #endif
+  #define ETH_SPI_SCK  13
+  #define ETH_SPI_MISO 12
+  #define ETH_SPI_MOSI 11
+
+  #define S7WIRED
+#endif
+
 #ifdef S7WIRED
-  #include "EthernetClient.h"  
+  #ifndef ESP32_S3_ETH    
+    #include "EthernetClient.h"  
+  #endif
 #else
   #include "WiFiClient.h"
 #endif

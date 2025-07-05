@@ -1,5 +1,5 @@
 /*=============================================================================|
-|  PROJECT SETTIMINO                                                     2.0.0 |
+|  PROJECT SETTIMINO                                                     2.1.0 |
 |==============================================================================|
 |  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
@@ -29,7 +29,10 @@
 |        Added Read/Write consistent bit into the CPU                          |
 |        Added new 18 helper functions                                         |
 |        Small bugfixes (Thanks to Daniel Förstmann and Schöneberg Swen)       |
-|                                                                              |
+|  2.1.0 Added new hardware support                                            |
+|        Arduino GIGA R1 WIFI with Ethernet Shield 2                           |
+|        Arduino Portenta with Portenta Hat Carrier                            |
+|        Waveshare ESP32-S3-ETH                                                |
 |=============================================================================*/
 #ifndef SETTIMINO_H
 #define SETTIMINO_H
@@ -202,7 +205,12 @@ private:
 	// Since we can use either an EthernetClient or a WifiClient 
 	// we have to create the class as an ancestor and then resolve
 	// the inherited into S7Client creator.
-	Client *TCPClient;
+	
+   #ifdef ESP32_S3_ETH
+	 NetworkClient* TCPClient;
+   #else
+	 Client* TCPClient;
+   #endif
 	
 	int PDULength;    // PDU Length negotiated
 	int IsoPduSize();

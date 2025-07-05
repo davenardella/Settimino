@@ -1,5 +1,5 @@
 /*=============================================================================|
-|  PROJECT SETTIMINO                                                     2.0.0 |
+|  PROJECT SETTIMINO                                                     2.1.0 |
 |==============================================================================|
 |  Copyright (C) 2013, 2025 Davide Nardella                                    |
 |  All rights reserved.                                                        |
@@ -29,11 +29,14 @@
 |        Added Read/Write consistent bit into the CPU                          |
 |        Added new 18 helper functions                                         |
 |        Small bugfixes (Thanks to Daniel Förstmann and Schöneberg Swen)       |
-|                                                                              |
+|  2.1.0 Added new hardware support                                            |
+|        Arduino GIGA R1 WIFI with Ethernet Shield 2                           |
+|        Arduino Portenta with Portenta Hat Carrier                            |
+|        Waveshare ESP32-S3-ETH                                                |
 |=============================================================================*/
 #include "Settimino.h"
 
-// For further informations about structures (the byte arrays and they meanins)
+// For further informations about structures (the byte arrays and they meanings)
 // see http://snap7.sourceforge.net project.
 
 /*
@@ -363,13 +366,19 @@ void S7Helper::SetStringAt(int index, char *value)
 void EthernetInit(uint8_t *mac, IPAddress ip)
 {
 #ifdef S7WIRED
-  #ifdef M5STACK_LAN    
+  #ifdef ESP32_S3_ETH
+	SPI.begin(ETH_SPI_SCK, ETH_SPI_MISO, ETH_SPI_MOSI);
+	ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, SPI);
+	ETH.config(ip);
+  #else
+    #ifdef M5STACK_LAN    
       SPI.begin(18, 19, 23, -1);
       Ethernet.init(26);
-  #endif  
-      // Start Ethernet
-      Ethernet.begin(mac, ip); 
-#endif    
+    #endif  
+	// Start Ethernet
+	Ethernet.begin(mac, ip);
+  #endif   
+#endif
 }
 //-----------------------------------------------------------------------------
 S7Client::S7Client()
@@ -389,7 +398,11 @@ S7Client::S7Client()
     TCPClient = new(WiFiClient);
 #endif    
 #ifdef S7WIRED 
+  #ifdef ESP32_S3_ETH
+	TCPClient = new(NetworkClient);
+  #else
     TCPClient = new(EthernetClient);
+  #endif
 #endif    
 }
 //-----------------------------------------------------------------------------
